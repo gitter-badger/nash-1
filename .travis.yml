@@ -9,12 +9,12 @@ matrix:
 language: go
 sudo: required
 
-services:
-  - docker
-
 go:
+  - tip
+  - 1.7
   - 1.6
   - 1.5
+
 install:
   - go get -v golang.org/x/exp/ebnf
   - make build
