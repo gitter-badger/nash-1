@@ -6,7 +6,7 @@ import (
 )
 
 // Caller type for dynamic completion
-type DynamicCompleteFunc func(string) []string
+type DynamicCompleteFunc func(string, int) []string
 
 type PrefixCompleterInterface interface {
 	Print(prefix string, level int, buf *bytes.Buffer)
@@ -19,7 +19,7 @@ type PrefixCompleterInterface interface {
 type DynamicPrefixCompleterInterface interface {
 	PrefixCompleterInterface
 	IsDynamic() bool
-	GetDynamicNames(line []rune) [][]rune
+	GetDynamicNames(line []rune, offset int) [][]rune
 }
 
 type PrefixCompleter struct {
@@ -63,9 +63,9 @@ func (p *PrefixCompleter) GetName() []rune {
 	return p.Name
 }
 
-func (p *PrefixCompleter) GetDynamicNames(line []rune) [][]rune {
+func (p *PrefixCompleter) GetDynamicNames(line []rune, offset int) [][]rune {
 	var names = [][]rune{}
-	for _, name := range p.Callback(string(line)) {
+	for _, name := range p.Callback(string(line), offset) {
 		names = append(names, []rune(name+" "))
 	}
 	return names
@@ -117,7 +117,7 @@ func doInternal(p PrefixCompleterInterface, line []rune, pos int, origLine []run
 
 		childDynamic, ok := child.(DynamicPrefixCompleterInterface)
 		if ok && childDynamic.IsDynamic() {
-			childNames = childDynamic.GetDynamicNames(origLine)
+			childNames = childDynamic.GetDynamicNames(origLine, pos)
 		} else {
 			childNames[0] = child.GetName()
 		}
