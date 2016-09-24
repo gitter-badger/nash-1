@@ -63,6 +63,10 @@ func (nash *Shell) Environ() sh.Env {
 	return nash.interp.Environ()
 }
 
+func (nash *Shell) Getvar(name string) (*sh.Obj, bool) {
+	return nash.interp.GetVar(name)
+}
+
 // Prompt returns the environment prompt or the default one
 func (nash *Shell) Prompt() string {
 	value, ok := nash.interp.Getenv("PROMPT")

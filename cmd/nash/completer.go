@@ -1,14 +1,36 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/NeowayLabs/nash"
 )
 
 func completer(sh *nash.Shell) func(string, int) []string {
+	return func(line string, pos int) []string {
+		err := sh.Exec("autocomplete", `IFS = ()
+nashcompletes <= nash_autocomplete("`+line+`")`)
+
+		if err != nil {
+			fmt.Printf("error: %s\n", err.Error())
+			return []string{}
+		}
+
+		if value, ok := sh.Getvar("nashcompletes"); ok {
+			return []string{value.Str()}
+		}
+
+		fmt.Printf("not found\n")
+
+		return []string{}
+	}
+}
+
+func completer2(sh *nash.Shell) func(string, int) []string {
 	return func(line string, pos int) []string {
 		var local bool
 
@@ -38,7 +60,7 @@ func completer(sh *nash.Shell) func(string, int) []string {
 		}
 
 		if (len(completeStr) > 0 && (completeStr[0] == '/' || completeStr[0] == '.')) || local {
-			return completeFile(completeStr)
+			return fzf(line, completeFile(completeStr))
 		}
 
 		pathVal := os.Getenv("PATH")
@@ -53,7 +75,7 @@ func completer(sh *nash.Shell) func(string, int) []string {
 			}
 		}
 
-		return completeInPathList(path, completeStr)
+		return fzf(line, completeInPathList(path, completeStr))
 	}
 }
 
@@ -194,4 +216,31 @@ func completeFile(complete string) []string {
 	} else {
 		return completeFile("./")
 	}
+}
+
+func fzf(line string, choices []string) []string {
+	cmd := exec.Command("fzf", "-q", line)
+	cmd.Stderr = os.Stderr
+	stdin, err := cmd.StdinPipe()
+
+	if err != nil {
+		return []string{}
+	}
+
+	go func() {
+		for _, str := range choices {
+			fmt.Fprintf(stdin, "%s\n", str)
+		}
+
+		stdin.Close()
+	}()
+
+	out, err := cmd.Output()
+
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return []string{}
+	}
+
+	return []string{string(out)}
 }
