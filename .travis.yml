@@ -6,17 +6,11 @@ matrix:
   allow_failures:
     - os: osx
 
-language: go
 sudo: required
 
-go:
-  - tip
-  - 1.7
-  - 1.6
-  - 1.5
-
-before_install:
+install:
   - brew install gimme
+  - eval "$(GIMME_GO_VERSION=1.5 gimme)"
 install:
   - go get -v golang.org/x/exp/ebnf
   - make build
