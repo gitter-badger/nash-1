@@ -11,7 +11,6 @@ sudo: required
 install:
   - brew install gimme
   - eval "$(GIMME_GO_VERSION=1.5 gimme)"
-install:
   - go get -v golang.org/x/exp/ebnf
   - make build
 script:
